@@ -1,0 +1,80 @@
+﻿pip install sqlalchemy
+
+
+app/
+└── backend/
+    ├── db.py
+    ├── models/
+    │   ├── init.py
+    │   ├── task.py
+    │   └── user.py
+    ├── routers/
+    │   ├── init.py
+    ├── schemas.py
+    └── main.py
+
+
+from sqlalchemy import create_engine
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
+DATABASE_URL = 'sqlite:///taskmanager.db'
+engine = create_engine(DATABASE_URL)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+Base = declarative_base()
+
+from sqlalchemy import Column, Integer, String
+from sqlalchemy.orm import relationship
+from ..db import Base
+
+class User(Base):
+    tablename = 'users'
+
+id = Column(Integer, primary_key=True, index=True)
+username = Column(String, nullable=False)
+firstname = Column(String)
+lastname = Column(String)
+age = Column(Integer)
+slug = Column(String, unique=True, index=True)
+
+# Связь с задачами
+tasks = relationship('Task', back_populates='user')
+
+from sqlalchemy import Column, Integer, String, Boolean, ForeignKey
+from sqlalchemy.orm import relationship
+from ..db import Base
+
+
+class Task(Base):
+    tablename = 'tasks'
+
+id = Column(Integer, primary_key=True, index=True)
+title = Column(String, nullable=False)
+content = Column(String)
+priority = Column(Integer, default=0)
+completed = Column(Boolean, default=False)
+user_id = Column(Integer, ForeignKey('users.id'), nullable=False, index=True)
+slug = Column(String, unique=True, index=True)
+
+# Связь с пользователем
+user = relationship('User', back_populates='tasks')
+
+from .user import User
+from .task import Task
+
+from fastapi import FastAPI
+from .db import Base, engine
+from .models import User, Task
+
+Создание FastAPI приложения
+
+app = FastAPI()
+
+Создание всех таблиц в базе данных
+
+Base.metadata.create_all(bind=engine)
+
+print("Creating tables…")
+Base.metadata.create_all(bind=engine)
+
+uvicorn app.backend.main:app --reload
